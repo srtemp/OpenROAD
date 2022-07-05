@@ -102,6 +102,7 @@ class Restructure
   void runABC();
   void postABC(float worst_slack);
   bool writeAbcScript(std::string file_name);
+  bool writeAbcPreScript(std::string file_name);
   void writeOptCommands(std::ofstream& script);
   void initDB();
   void getEndPoints(sta::PinSet& ends, bool area_mode, unsigned max_depth);

@@ -188,7 +188,7 @@ void Restructure::runABC()
   //modes = {MODE::LSOracle};
   child_proc.resize(modes.size(), 0);
 
-  string LSO_exec{"lsoracle"}; //path to LSO executable.  Default assumes it's on path
+  std::string LSO_exec = "lsoracle"; //path to LSO executable.  Default assumes it's on path
 
   std::string best_blif;
   int best_inst_count = std::numeric_limits<int>::max();
