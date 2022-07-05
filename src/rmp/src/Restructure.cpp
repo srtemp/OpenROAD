@@ -215,7 +215,7 @@ void Restructure::runABC()
       files_to_remove.emplace_back(ABC_pre_script_file);
   }
   
-  int code = system((LSO_exec + " -c " + LSO_script);
+  int code = system(LSO_exec + " -c " + LSO_script);
   assert(code == 0);
 
   for (size_t curr_mode_idx = 0; curr_mode_idx < modes.size(); curr_mode_idx++) {
