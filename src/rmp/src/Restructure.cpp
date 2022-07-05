@@ -175,6 +175,7 @@ void Restructure::runABC()
   // abc optimization
   std::vector<Mode> modes;
   std::vector<pid_t> child_proc;
+  pid_t preproc_ID = 0;
 
   if (is_area_mode_) {
     // Area Mode
@@ -184,7 +185,10 @@ void Restructure::runABC()
     modes = {Mode::DELAY_1, Mode::DELAY_2, Mode::DELAY_3, Mode::DELAY_4};
   }
 
+  //modes = {MODE::LSOracle};
   child_proc.resize(modes.size(), 0);
+
+  string LSO_exec{"lsoracle"}; //path to LSO executable.  Default assumes it's on path
 
   std::string best_blif;
   int best_inst_count = std::numeric_limits<int>::max();
@@ -193,25 +197,38 @@ void Restructure::runABC()
   debugPrint(
 	     logger_, RMP, "remap", 1, "Running ABC with {} modes.", modes.size());
 
+  const std::string ABC_pre_script_file = work_dir_name_ + "abc_pre_script.tcl";
+  std::string LSO_script = "read " + LSO_input_filename_ + "; kahypar 1; optimize --depth; write_blif -m " + LSO_output_filename_ +";";
+  
+  if (writeAbcPreScript(ABC_pre_script_file)) {
+      Abc_Start();
+      Abc_Frame_t * abc_frame = Abc_FrameGetGlobalFrame();
+      const std::string preCommand = "source " + ABC_pre_script_file;
+      preproc_ID = Cmd_CommandExecute( abc_frame, preCommand.c_str() );
+      if ( preproc_ID )
+	    {
+	      logger_->error(RMP, 26, "Error executing ABC command {}.", preCommand);
+	      return;
+    	}
+      Abc_Stop();
+      // exit linked abc
+      files_to_remove.emplace_back(ABC_pre_script_file);
+  }
+  
+  int code = system((LSO_exec + " -c " + LSO_script);
+  assert(code == 0);
+
   for (size_t curr_mode_idx = 0; curr_mode_idx < modes.size(); curr_mode_idx++) {
-    output_blif_file_name_
-      = work_dir_name_ + std::string(block_->getConstName())
-      + std::to_string(curr_mode_idx) + "_crit_path_out.blif";
+    output_blif_file_name_ = work_dir_name_ + std::string(block_->getConstName()) + std::to_string(curr_mode_idx) + "_crit_path_out.blif";
 
     opt_mode_ = modes[curr_mode_idx];
 
-    const std::string abc_script_file = work_dir_name_
-      + std::to_string(curr_mode_idx)
-      + "ord_abc_script.tcl";
+    const std::string abc_script_file = work_dir_name_ + std::to_string(curr_mode_idx) + "ord_abc_pre_script.tcl";
+
     if (logfile_ == "")
       logfile_ = work_dir_name_ + "abc.log";
 
-    debugPrint(logger_,
-	       RMP,
-	       "remap",
-	       1,
-	       "Writing ABC script file {}.",
-	       abc_script_file);
+    debugPrint(logger_, RMP, "remap", 1, "Writing ABC script file {}.", abc_script_file);
 
     if (writeAbcScript(abc_script_file)) {
       // call linked abc
@@ -220,15 +237,15 @@ void Restructure::runABC()
       const std::string command = "source " + abc_script_file;
       child_proc[curr_mode_idx] = Cmd_CommandExecute( abc_frame, command.c_str() );
       if ( child_proc[curr_mode_idx] )
-	{
-	  logger_->error(RMP, 26, "Error executing ABC command {}.", command);
-	  return;
-	}
+	    {
+	      logger_->error(RMP, 26, "Error executing ABC command {}.", command);
+	      return;
+    	}
       Abc_Stop();
       // exit linked abc
       files_to_remove.emplace_back(abc_script_file);
     }
-  }  // end modes
+ }  // end modes
 
   // Inspect ABC results to choose blif with least instance count
   for (int curr_mode_idx = 0; curr_mode_idx < modes.size(); curr_mode_idx++) {
@@ -483,10 +500,10 @@ bool Restructure::writeAbcScript(std::string file_name)
     script << read_lib_str;
   }
 
-  script << "read_blif -n " << input_blif_file_name_ << std::endl;
+  script << "read_blif -n " << LSO_output_filename_ << std::endl;
 
   if (logger_->debugCheck(RMP, "remap", 1))
-    script << "write_verilog " << input_blif_file_name_ + std::string(".v")
+    script << "write_verilog " << LSO_output_filename_ + std::string(".v")
            << std::endl;
 
   writeOptCommands(script);
@@ -500,6 +517,62 @@ bool Restructure::writeAbcScript(std::string file_name)
   script.close();
 
   return true;
+}
+
+bool Restructure::writeAbcPreScript(std::string file_name){
+  std::ofstream script(file_name.c_str());
+
+  if (!script.is_open()) {
+    logger_->error(RMP, 20, "Cannot open file {} for writing.", file_name);
+    return false;
+  }
+
+  for (auto lib_name : lib_file_names_) {
+    // abc read_lib prints verbose by default, -v toggles to off to avoid read time being printed
+    std::string read_lib_str = "read_lib -v " + lib_name + "\n";
+    script << read_lib_str;
+  }
+
+  script << "read_blif -n " << input_blif_file_name_ << std::endl;
+
+  if (logger_->debugCheck(RMP, "remap", 1))
+    script << "write_verilog " << input_blif_file_name_ + std::string(".v")
+           << std::endl;
+  script << "strash; write_blif " << LSO_input_filename_ << std::endl;
+
+  if (logger_->debugCheck(RMP, "remap", 1))
+    script << "write_verilog " << LSO_input_filename_ + std::string(".v")
+           << std::endl;
+
+  script.close();
+
+  return true;
+}
+
+bool Restructure::callLSOracle(std::string file_name)
+{
+    std::ofstream preproc_script(file_name.c_str());
+
+  if (!preproc_script.is_open()) {
+    logger_->error(RMP, 20, "Cannot open file {} for writing.", file_name);
+    return false;
+  }
+
+  for (auto lib_name : lib_file_names_) {
+    // abc read_lib prints verbose by default, -v toggles to off to avoid read time being printed
+    std::string read_lib_str = "read_lib -v " + lib_name + "\n";
+    preproc_script << read_lib_str;
+  }
+
+  preproc_script << "read_blif -n " << input_blif_file_name_ << std::endl;
+
+  if (logger_->debugCheck(RMP, "remap", 1))
+    preproc_script << "write_verilog " << input_blif_file_name_ + std::string(".v")
+           << std::endl;
+  
+  preproc_script << "strash; write_blif " << LSO_input_filename_ << std::endl;
+
+
 }
 
 void Restructure::writeOptCommands(std::ofstream& script)

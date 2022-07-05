@@ -125,6 +125,8 @@ class Restructure
   odb::dbBlock* block_ = nullptr;
 
   std::string input_blif_file_name_;
+  std::string LSO_input_filename_;
+  std::string LSO_output_filename_;
   std::string output_blif_file_name_;
   std::vector<std::string> lib_file_names_;
   std::set<odb::dbInst*> path_insts_;
