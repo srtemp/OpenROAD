@@ -549,7 +549,7 @@ bool Restructure::writeAbcPreScript(std::string file_name){
   return true;
 }
 
-bool Restructure::callLSOracle(std::string file_name)
+/*bool Restructure::callLSOracle(std::string file_name)
 {
     std::ofstream preproc_script(file_name.c_str());
 
@@ -573,7 +573,7 @@ bool Restructure::callLSOracle(std::string file_name)
   preproc_script << "strash; write_blif " << LSO_input_filename_ << std::endl;
 
 
-}
+}*/
 
 void Restructure::writeOptCommands(std::ofstream& script)
 {
