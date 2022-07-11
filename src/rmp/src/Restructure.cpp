@@ -523,7 +523,7 @@ bool Restructure::writeAbcPreScript(std::string file_name){
   std::ofstream script(file_name.c_str());
 
   if (!script.is_open()) {
-    logger_->error(RMP, "Cannot open file {} for writing.", file_name);
+    //logger_->error(RMP, "Cannot open file {} for writing.", file_name);
     return false;
   }
 
