@@ -156,6 +156,10 @@ void Restructure::runABC()
 {
   input_blif_file_name_ = work_dir_name_ + std::string(block_->getConstName())
     + "_crit_path.blif";
+  LSO_input_filename_ = work_dir_name_ +
+    + "_LSO_input.blif";
+  LSO_output_filename_ = work_dir_name_ +
+    + "_LSO_output.blif";
   std::vector<std::string> files_to_remove;
 
   debugPrint(logger_,
