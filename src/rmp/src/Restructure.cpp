@@ -549,32 +549,6 @@ bool Restructure::writeAbcPreScript(std::string file_name){
   return true;
 }
 
-/*bool Restructure::callLSOracle(std::string file_name)
-{
-    std::ofstream preproc_script(file_name.c_str());
-
-  if (!preproc_script.is_open()) {
-    logger_->error(RMP, 20, "Cannot open file {} for writing.", file_name);
-    return false;
-  }
-
-  for (auto lib_name : lib_file_names_) {
-    // abc read_lib prints verbose by default, -v toggles to off to avoid read time being printed
-    std::string read_lib_str = "read_lib -v " + lib_name + "\n";
-    preproc_script << read_lib_str;
-  }
-
-  preproc_script << "read_blif -n " << input_blif_file_name_ << std::endl;
-
-  if (logger_->debugCheck(RMP, "remap", 1))
-    preproc_script << "write_verilog " << input_blif_file_name_ + std::string(".v")
-           << std::endl;
-  
-  preproc_script << "strash; write_blif " << LSO_input_filename_ << std::endl;
-
-
-}*/
-
 void Restructure::writeOptCommands(std::ofstream& script)
 {
   std::string choice
