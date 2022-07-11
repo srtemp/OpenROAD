@@ -207,7 +207,7 @@ void Restructure::runABC()
       preproc_ID = Cmd_CommandExecute( abc_frame, preCommand.c_str() );
       if ( preproc_ID )
 	    {
-	      logger_->error(RMP, 26, "Error executing ABC command {}.", preCommand);
+	      logger_->error(RMP, 2600, "Error executing ABC command {}.", preCommand);
 	      return;
     	}
       Abc_Stop();
@@ -228,7 +228,7 @@ void Restructure::runABC()
     if (logfile_ == "")
       logfile_ = work_dir_name_ + "abc.log";
 
-    debugPrint(logger_, RMP, "remap", 1, "Writing ABC script file {}.", abc_script_file);
+   // debugPrint(logger_, RMP, "remap", 1, "Writing ABC script file {}.", abc_script_file);
 
     if (writeAbcScript(abc_script_file)) {
       // call linked abc
@@ -238,7 +238,7 @@ void Restructure::runABC()
       child_proc[curr_mode_idx] = Cmd_CommandExecute( abc_frame, command.c_str() );
       if ( child_proc[curr_mode_idx] )
 	    {
-	      logger_->error(RMP, 26, "Error executing ABC command {}.", command);
+	      logger_->error(RMP, 2601, "Error executing ABC command {}.", command);
 	      return;
     	}
       Abc_Stop();
@@ -523,7 +523,7 @@ bool Restructure::writeAbcPreScript(std::string file_name){
   std::ofstream script(file_name.c_str());
 
   if (!script.is_open()) {
-    logger_->error(RMP, 20, "Cannot open file {} for writing.", file_name);
+    logger_->error(RMP, "Cannot open file {} for writing.", file_name);
     return false;
   }
 
